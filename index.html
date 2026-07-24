@@ -18,16 +18,16 @@
 </style>
 </head>
 <body>
-<audio id="sirenAudio" preload="auto" playsinline src="sports-siren-5s.wav"></audio>
-<audio id="chimesAudio" preload="auto" playsinline src="three-warning-chimes.wav"></audio>
+<audio id="warningBellsAudio" preload="auto" playsinline src="warning-three-bells.wav"></audio>
+<audio id="churchBellsAudio" preload="auto" playsinline src="four-church-bells.wav"></audio>
 <main class="app">
 <header class="top"><div><div class="eyebrow">GORDONVALE TOUCH</div><h1 id="appTitle">Competition Controller</h1></div><button id="backBtn" class="back hidden">Home</button></header>
 <section id="home" class="home">
 <button id="competitionMode" class="mode competition"><strong>🏉 Competition Timer</strong><span>Automatic rounds, halves, half-time, warnings and changeovers.</span></button>
-<button id="dropoffMode" class="mode dropoff"><strong>⚡ Drop-Off Timer</strong><span>One-minute warning, then a siren every two minutes, three times.</span></button>
+<button id="dropoffMode" class="mode dropoff"><strong>⚡ Drop-Off Timer</strong><span>One-minute warning, then four church-bell chimes every two minutes, three times.</span></button>
 </section>
 <section id="timerView" class="timer-view">
-<div id="audioLock" class="audio-lock"><strong>Enable sound before starting</strong><br><span>iPhone requires one tap to unlock the five-second siren, warning chimes and voice.</span><br><button id="enableAudio" class="btn dark">Enable & Test Sound</button></div>
+<div id="audioLock" class="audio-lock"><strong>Enable sound before starting</strong><br><span>iPhone requires one tap to unlock the church bells and voice.</span><br><button id="enableAudio" class="btn dark">Enable & Test Sound</button></div>
 <section class="card hero">
 <div id="roundLabel" class="round">READY</div>
 <div id="stageLabel" class="stage">Choose a timer</div>
@@ -37,7 +37,7 @@
 </section>
 <section class="grid">
 <button id="startPause" class="btn primary wide">Start</button>
-<button id="manualHorn" class="btn">5-Second Siren</button>
+<button id="manualHorn" class="btn">Four Bell Chimes</button>
 <button id="manualVoice" class="btn">Announcement</button>
 <button id="minusMinute" class="btn">−1 minute</button>
 <button id="plusMinute" class="btn">+1 minute</button>
@@ -53,7 +53,7 @@
 <div class="field"><label for="changeMinutes">Changeover</label><select id="changeMinutes"><option>5</option><option selected>10</option><option>15</option></select></div>
 <div class="toggle"><span><strong>1-minute warning</strong><br><small>Before each half</small></span><input id="warningEnabled" type="checkbox" checked></div>
 <div class="toggle"><span><strong>Voice</strong><br><small>Warning message</small></span><input id="voiceEnabled" type="checkbox" checked></div>
-<div class="field"><label for="hornVolume">Siren volume</label><input id="hornVolume" type="range" min="0.1" max="1" value="0.65" step="0.05"></div>
+<div class="field"><label for="hornVolume">Church bell volume</label><input id="hornVolume" type="range" min="0.1" max="1" value="0.65" step="0.05"></div>
 <div class="field"><label for="voiceRate">Voice speed</label><input id="voiceRate" type="range" min="0.7" max="1.15" value="0.88" step="0.05"></div>
 </div>
 </section>
@@ -61,11 +61,11 @@
 <h2>Drop-Off settings</h2>
 <div class="settings-grid">
 <div class="field"><label for="dropWarningMinutes">Warning length</label><select id="dropWarningMinutes"><option selected>1</option><option>2</option></select></div>
-<div class="field"><label for="dropIntervalMinutes">Siren interval</label><select id="dropIntervalMinutes"><option>1</option><option selected>2</option><option>3</option></select></div>
-<div class="field"><label for="dropHornCount">Number of interval sirens</label><select id="dropHornCount"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+<div class="field"><label for="dropIntervalMinutes">Bell interval</label><select id="dropIntervalMinutes"><option>1</option><option selected>2</option><option>3</option></select></div>
+<div class="field"><label for="dropHornCount">Number of bell signals</label><select id="dropHornCount"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
 <div class="toggle"><span><strong>Warning voice</strong><br><small>Players take the field</small></span><input id="dropVoiceEnabled" type="checkbox" checked></div>
 </div>
-<div class="drop-sequence">Default: 1-minute warning → start siren → 2 minutes → siren → 2 minutes → siren → 2 minutes → final siren. No “drop-off complete” voice.</div>
+<div class="drop-sequence">Default: 1-minute warning → start bells → 2 minutes → bells → 2 minutes → bells → 2 minutes → final bells. No “drop-off complete” voice.</div>
 </section>
 <div id="status" class="status">Select a timer mode.</div>
 <div class="footer">Keep the iPhone screen awake and volume turned up. Connect to the PA using AUX/LINE IN or Bluetooth.</div>
@@ -73,92 +73,58 @@
 </main>
 <script>
 (()=>{
-const $=id=>document.getElementById(id);let mode=null,stages=[],index=0,remaining=0,running=false,timer=null,endAt=0,audioUnlocked=false;const sirenAudio=$('sirenAudio'),chimesAudio=$('chimesAudio');
-const WARNING_TEXT='Attention. One Minute Warning. Referees and players, please take to the field.';
+const $=id=>document.getElementById(id);let mode=null,stages=[],index=0,remaining=0,running=false,timer=null,endAt=0,audioUnlocked=false;const warningBellsAudio=$('warningBellsAudio'),churchBellsAudio=$('churchBellsAudio');
 const els={home:$('home'),view:$('timerView'),title:$('appTitle'),back:$('backBtn'),round:$('roundLabel'),stage:$('stageLabel'),clock:$('clock'),next:$('nextLabel'),progress:$('progress'),status:$('status'),start:$('startPause'),compSettings:$('competitionSettings'),dropSettings:$('dropoffSettings'),audioLock:$('audioLock')};
 function fmt(s){s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
-function horn(done){
+function playAudio(audio,done,statusText){
   try{
-    sirenAudio.pause();
-    sirenAudio.currentTime=0;
-    sirenAudio.volume=+$('hornVolume').value;
-    const playPromise=sirenAudio.play();
+    audio.pause();
+    audio.currentTime=0;
+    audio.volume=+$('hornVolume').value;
+    const playPromise=audio.play();
     if(playPromise&&typeof playPromise.then==='function'){
       playPromise.then(()=>{
-        els.status.textContent='Five-second siren playing.';
-        const finish=()=>{sirenAudio.removeEventListener('ended',finish);done&&done()};
-        sirenAudio.addEventListener('ended',finish,{once:true});
+        els.status.textContent=statusText;
+        const finish=()=>{audio.removeEventListener('ended',finish);done&&done()};
+        audio.addEventListener('ended',finish,{once:true});
       }).catch(()=>{
-        els.status.textContent='Siren was blocked. Tap Enable & Test Sound again.';
+        els.status.textContent='Bell sound was blocked. Tap Enable & Test Sound again.';
         done&&done();
       });
     }
   }catch(e){
-    els.status.textContent='Siren could not start. Tap Enable & Test Sound.';
+    els.status.textContent='Bell sound could not start. Tap Enable & Test Sound.';
     done&&done();
   }
 }
-function naturalVoice(){
-  const voices=speechSynthesis.getVoices();
-  const score=v=>{
-    const name=(v.name||'').toLowerCase(),lang=(v.lang||'').toLowerCase();
-    let n=0;
-    if(lang==='en-au')n+=100;else if(lang.startsWith('en'))n+=30;
-    if(/matilda|karen|lee|siri/.test(name))n+=35;
-    if(/premium|enhanced|natural/.test(name))n+=25;
-    if(v.localService)n+=5;
-    return n;
-  };
-  return voices.filter(v=>(v.lang||'').toLowerCase().startsWith('en')).sort((a,b)=>score(b)-score(a))[0]||null;
-}
-function speak(text,done){
-  const enabled=mode==='dropoff' ? $('dropVoiceEnabled').checked : $('voiceEnabled').checked;
-  if(!enabled||!('speechSynthesis'in window)){done&&done();return}
-  window.speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text),voice=naturalVoice();
-  u.voice=voice;u.lang=voice?.lang||'en-AU';u.rate=+$('voiceRate').value;u.pitch=0.96;u.volume=1;
-  u.onend=()=>done&&done();u.onerror=()=>done&&done();
-  speechSynthesis.speak(u);els.status.textContent='Warning announcement playing.';
-}
-function warningAnnouncement(){
-  const enabled=mode==='dropoff' ? $('dropVoiceEnabled').checked : $('voiceEnabled').checked;
-  if(!enabled)return;
-  try{
-    chimesAudio.pause();chimesAudio.currentTime=0;chimesAudio.volume=1;
-    const play=chimesAudio.play();
-    if(play&&typeof play.then==='function'){
-      play.then(()=>{
-        els.status.textContent='Three warning chimes playing.';
-        chimesAudio.onended=()=>{chimesAudio.onended=null;speak(WARNING_TEXT)};
-      }).catch(()=>speak(WARNING_TEXT));
-    }
-  }catch(e){speak(WARNING_TEXT)}
-}
+function horn(done){playAudio(churchBellsAudio,done,'Four loud church-bell chimes playing.')}
+function warningSignal(){playAudio(warningBellsAudio,()=>speak('Attention. One minute warning. Referees and players please take to the field.'),'Three warning bell chimes playing.')}
+function speak(text){const enabled=mode==='dropoff' ? $('dropVoiceEnabled').checked : $('voiceEnabled').checked;if(!enabled||!('speechSynthesis'in window))return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text),vs=speechSynthesis.getVoices();const preferred=['Karen','Samantha','Matilda','Moira','Daniel','Serena','Ava','Jamie'];u.voice=preferred.map(name=>vs.find(v=>v.name.includes(name)&&v.lang.startsWith('en'))).find(Boolean)||vs.find(v=>v.lang==='en-AU'&&/premium|enhanced/i.test(v.name))||vs.find(v=>v.lang==='en-AU')||vs.find(v=>v.lang==='en-GB')||vs.find(v=>v.lang.startsWith('en'))||null;u.lang=u.voice?.lang||'en-AU';u.rate=+$('voiceRate').value;u.pitch=1;u.volume=1;speechSynthesis.speak(u);els.status.textContent='Voice announcement playing.'}
 async function unlockAudio(){
   try{
-    sirenAudio.volume=+$('hornVolume').value;
-    sirenAudio.currentTime=0;
-    await sirenAudio.play();
+    churchBellsAudio.volume=+$('hornVolume').value;
+    churchBellsAudio.currentTime=0;
+    await churchBellsAudio.play();
     audioUnlocked=true;
     els.audioLock.classList.add('hidden');
-    els.status.textContent='Five-second siren test playing.';
-    sirenAudio.onended=()=>{sirenAudio.onended=null;els.status.textContent='Sound enabled. Use Announcement to test the chimes and voice.'};
+    els.status.textContent='Four church-bell chimes test playing.';
+    churchBellsAudio.onended=()=>{churchBellsAudio.onended=null;speak('Sound enabled.')};
   }catch(e){
     audioUnlocked=false;
-    els.status.textContent='Safari blocked the siren. Tap Enable & Test Sound again.';
+    els.status.textContent='Safari blocked the bell sound. Tap Enable & Test Sound again.';
   }
 }
-function buildCompetition(){stages=[];const rounds=+$('rounds').value,half=+$('halfMinutes').value*60,halfTime=+$('halftimeMinutes').value*60,change=+$('changeMinutes').value*60;for(let r=1;r<=rounds;r++){if($('warningEnabled').checked)stages.push({label:`ROUND ${r} OF ${rounds}`,name:'One-minute warning',sec:60,type:'warning',hornAtEnd:true,voiceAtStart:true,next:`Round ${r} first half`});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'First half',sec:half,type:'play',hornAtEnd:true,next:'Half-time'});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'Half-time',sec:halfTime,type:'break',hornAtEnd:true,next:'Second half'});if($('warningEnabled').checked)stages.push({label:`ROUND ${r} OF ${rounds}`,name:'One-minute warning',sec:60,type:'warning',hornAtEnd:true,voiceAtStart:true,next:`Round ${r} second half`});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'Second half',sec:half,type:'play',hornAtEnd:true,next:r<rounds?'Changeover':'Competition complete'});if(r<rounds)stages.push({label:`NEXT: ROUND ${r+1}`,name:'Changeover',sec:change,type:'break',hornAtEnd:false,next:`Round ${r+1}`});}resetState()}
-function buildDropoff(){stages=[];const w=+$('dropWarningMinutes').value*60,interval=+$('dropIntervalMinutes').value*60,count=+$('dropHornCount').value;stages.push({label:'DROP-OFF TIMER',name:'One-minute warning',sec:w,type:'warning',hornAtEnd:true,voiceAtStart:true,next:'Drop-off starts'});for(let n=1;n<=count;n++)stages.push({label:'DROP-OFF TIMER',name:`Drop-off period ${n} of ${count}`,sec:interval,type:'dropoff',hornAtEnd:true,next:n<count?`Siren ${n+1} of ${count}`:'Drop-off complete'});resetState()}
+function buildCompetition(){stages=[];const rounds=+$('rounds').value,half=+$('halfMinutes').value*60,halfTime=+$('halftimeMinutes').value*60,change=+$('changeMinutes').value*60;for(let r=1;r<=rounds;r++){if($('warningEnabled').checked)stages.push({label:`ROUND ${r} OF ${rounds}`,name:'One-minute warning',sec:60,type:'warning',hornAtEnd:true,warningAtStart:true,next:`Round ${r} first half`});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'First half',sec:half,type:'play',hornAtEnd:true,next:'Half-time'});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'Half-time',sec:halfTime,type:'break',hornAtEnd:true,next:'Second half'});if($('warningEnabled').checked)stages.push({label:`ROUND ${r} OF ${rounds}`,name:'One-minute warning',sec:60,type:'warning',hornAtEnd:true,warningAtStart:true,next:`Round ${r} second half`});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'Second half',sec:half,type:'play',hornAtEnd:true,next:r<rounds?'Changeover':'Competition complete'});if(r<rounds)stages.push({label:`NEXT: ROUND ${r+1}`,name:'Changeover',sec:change,type:'break',hornAtEnd:false,next:`Round ${r+1}`});}resetState()}
+function buildDropoff(){stages=[];const w=+$('dropWarningMinutes').value*60,interval=+$('dropIntervalMinutes').value*60,count=+$('dropHornCount').value;stages.push({label:'DROP-OFF TIMER',name:'One-minute warning',sec:w,type:'warning',hornAtEnd:true,warningAtStart:true,next:'Drop-off starts'});for(let n=1;n<=count;n++)stages.push({label:'DROP-OFF TIMER',name:`Drop-off period ${n} of ${count}`,sec:interval,type:'dropoff',hornAtEnd:true,next:n<count?`Bell signal ${n+1} of ${count}`:'Drop-off complete'});resetState()}
 function resetState(){clearInterval(timer);running=false;index=0;remaining=stages[0]?.sec||0;render()}
 function setMode(m){mode=m;els.home.classList.add('hidden');els.view.classList.add('active');els.back.classList.remove('hidden');els.compSettings.classList.toggle('hidden',m!=='competition');els.dropSettings.classList.toggle('hidden',m!=='dropoff');$('manualVoice').classList.toggle('hidden',false);els.title.textContent=m==='competition'?'Competition Controller':'Drop-Off Timer';document.documentElement.style.setProperty('--accent',m==='competition'?'var(--green)':'var(--purple)');m==='competition'?buildCompetition():buildDropoff();els.status.textContent='Tap Enable & Test Sound before starting.'}
 function goHome(){pause();mode=null;els.view.classList.remove('active');els.home.classList.remove('hidden');els.back.classList.add('hidden');els.title.textContent='Competition Controller';els.status.textContent='Select a timer mode.'}
 function render(){const s=stages[index];document.body.dataset.state=s?.type||'finished';els.round.textContent=s?s.label:(mode==='dropoff'?'DROP-OFF COMPLETE':'COMPETITION COMPLETE');els.stage.textContent=s?s.name:'Complete';els.clock.textContent=fmt(remaining);els.next.textContent=s?`Next: ${s.next}`:'No voice announcement';els.progress.style.width=s&&s.sec?`${Math.min(100,Math.max(0,(1-remaining/s.sec)*100))}%`:'100%';els.start.textContent=running?'Pause':index>=stages.length?'Finished':(index===0&&remaining===stages[0]?.sec?'Start':'Resume');els.start.disabled=index>=stages.length}
-function start(initial=false){if(!audioUnlocked){els.status.textContent='Tap Enable & Test Sound first so iPhone permits audio.';return}const s=stages[index];if(!s)return;if(initial&&s.voiceAtStart)warningAnnouncement();running=true;endAt=Date.now()+remaining*1000;clearInterval(timer);timer=setInterval(tick,200);render()}
+function start(initial=false){if(!audioUnlocked){els.status.textContent='Tap Enable & Test Sound first so iPhone permits audio.';return}const s=stages[index];if(!s)return;if(initial&&s.warningAtStart)warningSignal();running=true;endAt=Date.now()+remaining*1000;clearInterval(timer);timer=setInterval(tick,200);render()}
 function pause(){if(running)remaining=Math.max(0,(endAt-Date.now())/1000);running=false;clearInterval(timer);render()}
 function tick(){remaining=Math.max(0,(endAt-Date.now())/1000);if(remaining<=0){clearInterval(timer);completeStage()}render()}
-function completeStage(){const finished=stages[index];const proceed=()=>{index++;if(index>=stages.length){running=false;remaining=0;render();els.status.textContent=mode==='dropoff'?'Drop-off complete. No voice announcement.':'Competition complete.';return}remaining=stages[index].sec;const nextStage=stages[index];if(nextStage.voiceAtStart)warningAnnouncement();running=true;endAt=Date.now()+remaining*1000;clearInterval(timer);timer=setInterval(tick,200);render()};if(finished?.hornAtEnd)horn(proceed);else proceed()}
-$('competitionMode').onclick=()=>setMode('competition');$('dropoffMode').onclick=()=>setMode('dropoff');els.back.onclick=goHome;$('enableAudio').onclick=unlockAudio;els.start.onclick=()=>running?pause():start(index===0&&remaining===stages[0]?.sec);$('manualHorn').onclick=()=>horn();$('manualVoice').onclick=warningAnnouncement;$('skip').onclick=()=>{clearInterval(timer);running=false;completeStage()};$('reset').onclick=()=>mode==='competition'?buildCompetition():buildDropoff();$('plusMinute').onclick=()=>{remaining+=60;if(running)endAt+=60000;render()};$('minusMinute').onclick=()=>{remaining=Math.max(0,remaining-60);if(running)endAt=Math.max(Date.now(),endAt-60000);render()};['rounds','halfMinutes','halftimeMinutes','changeMinutes','warningEnabled'].forEach(id=>$(id).onchange=()=>{if(mode==='competition'&&!running)buildCompetition()});['dropWarningMinutes','dropIntervalMinutes','dropHornCount'].forEach(id=>$(id).onchange=()=>{if(mode==='dropoff'&&!running)buildDropoff()});document.addEventListener('visibilitychange',()=>{if(!document.hidden&&running)tick()});if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+function completeStage(){const finished=stages[index];const proceed=()=>{index++;if(index>=stages.length){running=false;remaining=0;render();els.status.textContent=mode==='dropoff'?'Drop-off complete. No voice announcement.':'Competition complete.';return}remaining=stages[index].sec;const nextStage=stages[index];if(nextStage.warningAtStart)warningSignal();running=true;endAt=Date.now()+remaining*1000;clearInterval(timer);timer=setInterval(tick,200);render()};if(finished?.hornAtEnd)horn(proceed);else proceed()}
+$('competitionMode').onclick=()=>setMode('competition');$('dropoffMode').onclick=()=>setMode('dropoff');els.back.onclick=goHome;$('enableAudio').onclick=unlockAudio;els.start.onclick=()=>running?pause():start(index===0&&remaining===stages[0]?.sec);$('manualHorn').onclick=()=>horn();$('manualVoice').onclick=warningSignal;$('skip').onclick=()=>{clearInterval(timer);running=false;completeStage()};$('reset').onclick=()=>mode==='competition'?buildCompetition():buildDropoff();$('plusMinute').onclick=()=>{remaining+=60;if(running)endAt+=60000;render()};$('minusMinute').onclick=()=>{remaining=Math.max(0,remaining-60);if(running)endAt=Math.max(Date.now(),endAt-60000);render()};['rounds','halfMinutes','halftimeMinutes','changeMinutes','warningEnabled'].forEach(id=>$(id).onchange=()=>{if(mode==='competition'&&!running)buildCompetition()});['dropWarningMinutes','dropIntervalMinutes','dropHornCount'].forEach(id=>$(id).onchange=()=>{if(mode==='dropoff'&&!running)buildDropoff()});document.addEventListener('visibilitychange',()=>{if(!document.hidden&&running)tick()});if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 })();
 </script>
 </body>

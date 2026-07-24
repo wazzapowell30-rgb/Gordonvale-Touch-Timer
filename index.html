@@ -18,6 +18,7 @@
 </style>
 </head>
 <body>
+<audio id="sportsHornAudio" preload="auto" playsinline src="sports-airhorn.wav"></audio>
 <main class="app">
 <header class="top"><div><div class="eyebrow">GORDONVALE TOUCH</div><h1 id="appTitle">Competition Controller</h1></div><button id="backBtn" class="back hidden">Home</button></header>
 <section id="home" class="home">
@@ -25,7 +26,7 @@
 <button id="dropoffMode" class="mode dropoff"><strong>⚡ Drop-Off Timer</strong><span>One-minute warning, then a siren every two minutes, three times.</span></button>
 </section>
 <section id="timerView" class="timer-view">
-<div id="audioLock" class="audio-lock"><strong>Enable sound before starting</strong><br><span>iPhone requires one tap to unlock the horn and voice.</span><br><button id="enableAudio" class="btn dark">Enable & Test Sound</button></div>
+<div id="audioLock" class="audio-lock"><strong>Enable sound before starting</strong><br><span>iPhone requires one tap to unlock the sports airhorn and voice.</span><br><button id="enableAudio" class="btn dark">Enable & Test Sound</button></div>
 <section class="card hero">
 <div id="roundLabel" class="round">READY</div>
 <div id="stageLabel" class="stage">Choose a timer</div>
@@ -35,7 +36,7 @@
 </section>
 <section class="grid">
 <button id="startPause" class="btn primary wide">Start</button>
-<button id="manualHorn" class="btn">Horn</button>
+<button id="manualHorn" class="btn">Sports Airhorn</button>
 <button id="manualVoice" class="btn">Announcement</button>
 <button id="minusMinute" class="btn">−1 minute</button>
 <button id="plusMinute" class="btn">+1 minute</button>
@@ -51,7 +52,7 @@
 <div class="field"><label for="changeMinutes">Changeover</label><select id="changeMinutes"><option>5</option><option selected>10</option><option>15</option></select></div>
 <div class="toggle"><span><strong>1-minute warning</strong><br><small>Before each half</small></span><input id="warningEnabled" type="checkbox" checked></div>
 <div class="toggle"><span><strong>Voice</strong><br><small>Warning message</small></span><input id="voiceEnabled" type="checkbox" checked></div>
-<div class="field"><label for="hornVolume">Horn volume</label><input id="hornVolume" type="range" min="0.1" max="1" value="0.65" step="0.05"></div>
+<div class="field"><label for="hornVolume">Sports airhorn volume</label><input id="hornVolume" type="range" min="0.1" max="1" value="0.65" step="0.05"></div>
 <div class="field"><label for="voiceRate">Voice speed</label><input id="voiceRate" type="range" min="0.7" max="1.15" value="0.88" step="0.05"></div>
 </div>
 </section>
@@ -71,13 +72,45 @@
 </main>
 <script>
 (()=>{
-const $=id=>document.getElementById(id);let mode=null,stages=[],index=0,remaining=0,running=false,timer=null,endAt=0,audioCtx=null,audioUnlocked=false;
+const $=id=>document.getElementById(id);let mode=null,stages=[],index=0,remaining=0,running=false,timer=null,endAt=0,audioUnlocked=false;const hornAudio=$('sportsHornAudio');
 const els={home:$('home'),view:$('timerView'),title:$('appTitle'),back:$('backBtn'),round:$('roundLabel'),stage:$('stageLabel'),clock:$('clock'),next:$('nextLabel'),progress:$('progress'),status:$('status'),start:$('startPause'),compSettings:$('competitionSettings'),dropSettings:$('dropoffSettings'),audioLock:$('audioLock')};
 function fmt(s){s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
-function getAudio(){audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}
-function horn(done){try{const c=getAudio(),now=c.currentTime,d=7,master=c.createGain(),filter=c.createBiquadFilter(),comp=c.createDynamicsCompressor();filter.type='lowpass';filter.frequency.value=1800;master.gain.setValueAtTime(.001,now);master.gain.exponentialRampToValueAtTime(+$('hornVolume').value*.68,now+.12);master.gain.setValueAtTime(+$('hornVolume').value*.68,now+6.25);master.gain.exponentialRampToValueAtTime(.001,now+d);master.connect(filter);filter.connect(comp);comp.connect(c.destination);[185,247,370].forEach((f,k)=>{const o=c.createOscillator(),g=c.createGain();o.type=k===0?'sawtooth':'triangle';o.frequency.setValueAtTime(f,now);o.frequency.linearRampToValueAtTime(f*1.01,now+d);g.gain.value=[.33,.19,.10][k];o.connect(g);g.connect(master);o.start(now);o.stop(now+d+.05)});els.status.textContent='Sports horn playing for 7 seconds.';setTimeout(()=>done&&done(),7050)}catch(e){els.status.textContent='Sound could not start. Tap Enable & Test Sound.';done&&done()}}
+function horn(done){
+  try{
+    hornAudio.pause();
+    hornAudio.currentTime=0;
+    hornAudio.volume=+$('hornVolume').value;
+    const playPromise=hornAudio.play();
+    if(playPromise&&typeof playPromise.then==='function'){
+      playPromise.then(()=>{
+        els.status.textContent='Sports airhorn playing for 7 seconds.';
+        const finish=()=>{hornAudio.removeEventListener('ended',finish);done&&done()};
+        hornAudio.addEventListener('ended',finish,{once:true});
+      }).catch(()=>{
+        els.status.textContent='Airhorn was blocked. Tap Enable & Test Sound again.';
+        done&&done();
+      });
+    }
+  }catch(e){
+    els.status.textContent='Airhorn could not start. Tap Enable & Test Sound.';
+    done&&done();
+  }
+}
 function speak(text){const enabled=mode==='dropoff' ? $('dropVoiceEnabled').checked : $('voiceEnabled').checked;if(!enabled||!('speechSynthesis'in window))return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text),vs=speechSynthesis.getVoices();u.voice=vs.find(v=>v.lang==='en-AU')||vs.find(v=>v.lang.startsWith('en'))||null;u.lang=u.voice?.lang||'en-AU';u.rate=+$('voiceRate').value;u.volume=1;speechSynthesis.speak(u);els.status.textContent='Voice announcement playing.'}
-async function unlockAudio(){getAudio();const c=getAudio(),b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0);audioUnlocked=true;els.audioLock.classList.add('hidden');horn();setTimeout(()=>speak('Sound enabled.'),7200)}
+async function unlockAudio(){
+  try{
+    hornAudio.volume=+$('hornVolume').value;
+    hornAudio.currentTime=0;
+    await hornAudio.play();
+    audioUnlocked=true;
+    els.audioLock.classList.add('hidden');
+    els.status.textContent='Sports airhorn test playing.';
+    hornAudio.onended=()=>{hornAudio.onended=null;speak('Sound enabled.')};
+  }catch(e){
+    audioUnlocked=false;
+    els.status.textContent='Safari blocked the airhorn. Tap Enable & Test Sound again.';
+  }
+}
 function buildCompetition(){stages=[];const rounds=+$('rounds').value,half=+$('halfMinutes').value*60,halfTime=+$('halftimeMinutes').value*60,change=+$('changeMinutes').value*60;for(let r=1;r<=rounds;r++){if($('warningEnabled').checked)stages.push({label:`ROUND ${r} OF ${rounds}`,name:'One-minute warning',sec:60,type:'warning',hornAtEnd:true,voiceAtStart:'One minute warning. Players please take to the field.',next:`Round ${r} first half`});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'First half',sec:half,type:'play',hornAtEnd:true,next:'Half-time'});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'Half-time',sec:halfTime,type:'break',hornAtEnd:true,next:'Second half'});if($('warningEnabled').checked)stages.push({label:`ROUND ${r} OF ${rounds}`,name:'One-minute warning',sec:60,type:'warning',hornAtEnd:true,voiceAtStart:'One minute warning. Players please take to the field.',next:`Round ${r} second half`});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'Second half',sec:half,type:'play',hornAtEnd:true,next:r<rounds?'Changeover':'Competition complete'});if(r<rounds)stages.push({label:`NEXT: ROUND ${r+1}`,name:'Changeover',sec:change,type:'break',hornAtEnd:false,next:`Round ${r+1}`});}resetState()}
 function buildDropoff(){stages=[];const w=+$('dropWarningMinutes').value*60,interval=+$('dropIntervalMinutes').value*60,count=+$('dropHornCount').value;stages.push({label:'DROP-OFF TIMER',name:'One-minute warning',sec:w,type:'warning',hornAtEnd:true,voiceAtStart:'One minute warning. Players please take to the field.',next:'Drop-off starts'});for(let n=1;n<=count;n++)stages.push({label:'DROP-OFF TIMER',name:`Drop-off period ${n} of ${count}`,sec:interval,type:'dropoff',hornAtEnd:true,next:n<count?`Siren ${n+1} of ${count}`:'Drop-off complete'});resetState()}
 function resetState(){clearInterval(timer);running=false;index=0;remaining=stages[0]?.sec||0;render()}

@@ -18,8 +18,8 @@
 </style>
 </head>
 <body>
-<audio id="warningBellsAudio" preload="auto" playsinline src="warning-three-bells.wav"></audio>
-<audio id="churchBellsAudio" preload="auto" playsinline src="four-church-bells.wav"></audio>
+<audio id="warningBellAudio" preload="auto" playsinline src="warning-three-bells.wav"></audio>
+<audio id="fourBellAudio" preload="auto" playsinline src="four-church-bells.wav"></audio>
 <main class="app">
 <header class="top"><div><div class="eyebrow">GORDONVALE TOUCH</div><h1 id="appTitle">Competition Controller</h1></div><button id="backBtn" class="back hidden">Home</button></header>
 <section id="home" class="home">
@@ -65,7 +65,7 @@
 <div class="field"><label for="dropHornCount">Number of bell signals</label><select id="dropHornCount"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
 <div class="toggle"><span><strong>Warning voice</strong><br><small>Players take the field</small></span><input id="dropVoiceEnabled" type="checkbox" checked></div>
 </div>
-<div class="drop-sequence">Default: 1-minute warning → start bells → 2 minutes → bells → 2 minutes → bells → 2 minutes → final bells. No “drop-off complete” voice.</div>
+<div class="drop-sequence">Default: three warning chimes and announcement → four chimes → 2 minutes → four chimes → 2 minutes → four chimes → 2 minutes → final four chimes. No “drop-off complete” voice.</div>
 </section>
 <div id="status" class="status">Select a timer mode.</div>
 <div class="footer">Keep the iPhone screen awake and volume turned up. Connect to the PA using AUX/LINE IN or Bluetooth.</div>
@@ -73,12 +73,12 @@
 </main>
 <script>
 (()=>{
-const $=id=>document.getElementById(id);let mode=null,stages=[],index=0,remaining=0,running=false,timer=null,endAt=0,audioUnlocked=false;const warningBellsAudio=$('warningBellsAudio'),churchBellsAudio=$('churchBellsAudio');
+const $=id=>document.getElementById(id);let mode=null,stages=[],index=0,remaining=0,running=false,timer=null,endAt=0,audioUnlocked=false;const warningBellAudio=$('warningBellAudio'),fourBellAudio=$('fourBellAudio');
 const els={home:$('home'),view:$('timerView'),title:$('appTitle'),back:$('backBtn'),round:$('roundLabel'),stage:$('stageLabel'),clock:$('clock'),next:$('nextLabel'),progress:$('progress'),status:$('status'),start:$('startPause'),compSettings:$('competitionSettings'),dropSettings:$('dropoffSettings'),audioLock:$('audioLock')};
 function fmt(s){s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
-function playAudio(audio,done,statusText){
+function playAudio(audio,statusText,done){
   try{
-    audio.pause();
+    warningBellAudio.pause(); fourBellAudio.pause();
     audio.currentTime=0;
     audio.volume=+$('hornVolume').value;
     const playPromise=audio.play();
@@ -97,21 +97,44 @@ function playAudio(audio,done,statusText){
     done&&done();
   }
 }
-function horn(done){playAudio(churchBellsAudio,done,'Four loud church-bell chimes playing.')}
-function warningSignal(){playAudio(warningBellsAudio,()=>speak('Attention. One minute warning. Referees and players please take to the field.'),'Three warning bell chimes playing.')}
-function speak(text){const enabled=mode==='dropoff' ? $('dropVoiceEnabled').checked : $('voiceEnabled').checked;if(!enabled||!('speechSynthesis'in window))return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text),vs=speechSynthesis.getVoices();const preferred=['Karen','Samantha','Matilda','Moira','Daniel','Serena','Ava','Jamie'];u.voice=preferred.map(name=>vs.find(v=>v.name.includes(name)&&v.lang.startsWith('en'))).find(Boolean)||vs.find(v=>v.lang==='en-AU'&&/premium|enhanced/i.test(v.name))||vs.find(v=>v.lang==='en-AU')||vs.find(v=>v.lang==='en-GB')||vs.find(v=>v.lang.startsWith('en'))||null;u.lang=u.voice?.lang||'en-AU';u.rate=+$('voiceRate').value;u.pitch=1;u.volume=1;speechSynthesis.speak(u);els.status.textContent='Voice announcement playing.'}
+function horn(done){playAudio(fourBellAudio,'Four church-bell chimes playing.',done)}
+function getNaturalVoice(){
+  const voices=speechSynthesis.getVoices();
+  const preferred=['Karen','Matilda','Samantha','Ava','Serena','Moira','Daniel','Google UK English Female'];
+  for(const name of preferred){const found=voices.find(v=>v.name.includes(name));if(found)return found}
+  return voices.find(v=>v.lang==='en-AU')||voices.find(v=>v.lang==='en-GB')||voices.find(v=>v.lang.startsWith('en'))||null;
+}
+function speak(text){
+  const enabled=mode==='dropoff' ? $('dropVoiceEnabled').checked : $('voiceEnabled').checked;
+  if(!enabled||!('speechSynthesis'in window))return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.voice=getNaturalVoice();
+  u.lang=u.voice?.lang||'en-AU';
+  u.rate=+$('voiceRate').value;
+  u.pitch=0.98;
+  u.volume=1;
+  speechSynthesis.speak(u);
+  els.status.textContent='Voice announcement playing.';
+}
+function warningSequence(){
+  const enabled=mode==='dropoff' ? $('dropVoiceEnabled').checked : $('voiceEnabled').checked;
+  playAudio(warningBellAudio,'Three warning chimes playing.',()=>{
+    if(enabled)speak('Attention. One minute warning. Referees and players please take to the field.');
+  });
+}
 async function unlockAudio(){
   try{
-    churchBellsAudio.volume=+$('hornVolume').value;
-    churchBellsAudio.currentTime=0;
-    await churchBellsAudio.play();
+    fourBellAudio.volume=+$('hornVolume').value;
+    fourBellAudio.currentTime=0;
+    await fourBellAudio.play();
     audioUnlocked=true;
     els.audioLock.classList.add('hidden');
     els.status.textContent='Four church-bell chimes test playing.';
-    churchBellsAudio.onended=()=>{churchBellsAudio.onended=null;speak('Sound enabled.')};
+    fourBellAudio.onended=()=>{fourBellAudio.onended=null;speak('Sound enabled.')};
   }catch(e){
     audioUnlocked=false;
-    els.status.textContent='Safari blocked the bell sound. Tap Enable & Test Sound again.';
+    els.status.textContent='Safari blocked the bells. Tap Enable & Test Sound again.';
   }
 }
 function buildCompetition(){stages=[];const rounds=+$('rounds').value,half=+$('halfMinutes').value*60,halfTime=+$('halftimeMinutes').value*60,change=+$('changeMinutes').value*60;for(let r=1;r<=rounds;r++){if($('warningEnabled').checked)stages.push({label:`ROUND ${r} OF ${rounds}`,name:'One-minute warning',sec:60,type:'warning',hornAtEnd:true,warningAtStart:true,next:`Round ${r} first half`});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'First half',sec:half,type:'play',hornAtEnd:true,next:'Half-time'});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'Half-time',sec:halfTime,type:'break',hornAtEnd:true,next:'Second half'});if($('warningEnabled').checked)stages.push({label:`ROUND ${r} OF ${rounds}`,name:'One-minute warning',sec:60,type:'warning',hornAtEnd:true,warningAtStart:true,next:`Round ${r} second half`});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'Second half',sec:half,type:'play',hornAtEnd:true,next:r<rounds?'Changeover':'Competition complete'});if(r<rounds)stages.push({label:`NEXT: ROUND ${r+1}`,name:'Changeover',sec:change,type:'break',hornAtEnd:false,next:`Round ${r+1}`});}resetState()}
@@ -120,11 +143,11 @@ function resetState(){clearInterval(timer);running=false;index=0;remaining=stage
 function setMode(m){mode=m;els.home.classList.add('hidden');els.view.classList.add('active');els.back.classList.remove('hidden');els.compSettings.classList.toggle('hidden',m!=='competition');els.dropSettings.classList.toggle('hidden',m!=='dropoff');$('manualVoice').classList.toggle('hidden',false);els.title.textContent=m==='competition'?'Competition Controller':'Drop-Off Timer';document.documentElement.style.setProperty('--accent',m==='competition'?'var(--green)':'var(--purple)');m==='competition'?buildCompetition():buildDropoff();els.status.textContent='Tap Enable & Test Sound before starting.'}
 function goHome(){pause();mode=null;els.view.classList.remove('active');els.home.classList.remove('hidden');els.back.classList.add('hidden');els.title.textContent='Competition Controller';els.status.textContent='Select a timer mode.'}
 function render(){const s=stages[index];document.body.dataset.state=s?.type||'finished';els.round.textContent=s?s.label:(mode==='dropoff'?'DROP-OFF COMPLETE':'COMPETITION COMPLETE');els.stage.textContent=s?s.name:'Complete';els.clock.textContent=fmt(remaining);els.next.textContent=s?`Next: ${s.next}`:'No voice announcement';els.progress.style.width=s&&s.sec?`${Math.min(100,Math.max(0,(1-remaining/s.sec)*100))}%`:'100%';els.start.textContent=running?'Pause':index>=stages.length?'Finished':(index===0&&remaining===stages[0]?.sec?'Start':'Resume');els.start.disabled=index>=stages.length}
-function start(initial=false){if(!audioUnlocked){els.status.textContent='Tap Enable & Test Sound first so iPhone permits audio.';return}const s=stages[index];if(!s)return;if(initial&&s.warningAtStart)warningSignal();running=true;endAt=Date.now()+remaining*1000;clearInterval(timer);timer=setInterval(tick,200);render()}
+function start(initial=false){if(!audioUnlocked){els.status.textContent='Tap Enable & Test Sound first so iPhone permits audio.';return}const s=stages[index];if(!s)return;if(initial&&s.warningAtStart)warningSequence();running=true;endAt=Date.now()+remaining*1000;clearInterval(timer);timer=setInterval(tick,200);render()}
 function pause(){if(running)remaining=Math.max(0,(endAt-Date.now())/1000);running=false;clearInterval(timer);render()}
 function tick(){remaining=Math.max(0,(endAt-Date.now())/1000);if(remaining<=0){clearInterval(timer);completeStage()}render()}
-function completeStage(){const finished=stages[index];const proceed=()=>{index++;if(index>=stages.length){running=false;remaining=0;render();els.status.textContent=mode==='dropoff'?'Drop-off complete. No voice announcement.':'Competition complete.';return}remaining=stages[index].sec;const nextStage=stages[index];if(nextStage.warningAtStart)warningSignal();running=true;endAt=Date.now()+remaining*1000;clearInterval(timer);timer=setInterval(tick,200);render()};if(finished?.hornAtEnd)horn(proceed);else proceed()}
-$('competitionMode').onclick=()=>setMode('competition');$('dropoffMode').onclick=()=>setMode('dropoff');els.back.onclick=goHome;$('enableAudio').onclick=unlockAudio;els.start.onclick=()=>running?pause():start(index===0&&remaining===stages[0]?.sec);$('manualHorn').onclick=()=>horn();$('manualVoice').onclick=warningSignal;$('skip').onclick=()=>{clearInterval(timer);running=false;completeStage()};$('reset').onclick=()=>mode==='competition'?buildCompetition():buildDropoff();$('plusMinute').onclick=()=>{remaining+=60;if(running)endAt+=60000;render()};$('minusMinute').onclick=()=>{remaining=Math.max(0,remaining-60);if(running)endAt=Math.max(Date.now(),endAt-60000);render()};['rounds','halfMinutes','halftimeMinutes','changeMinutes','warningEnabled'].forEach(id=>$(id).onchange=()=>{if(mode==='competition'&&!running)buildCompetition()});['dropWarningMinutes','dropIntervalMinutes','dropHornCount'].forEach(id=>$(id).onchange=()=>{if(mode==='dropoff'&&!running)buildDropoff()});document.addEventListener('visibilitychange',()=>{if(!document.hidden&&running)tick()});if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+function completeStage(){const finished=stages[index];const proceed=()=>{index++;if(index>=stages.length){running=false;remaining=0;render();els.status.textContent=mode==='dropoff'?'Drop-off complete. No voice announcement.':'Competition complete.';return}remaining=stages[index].sec;const nextStage=stages[index];if(nextStage.warningAtStart)warningSequence();running=true;endAt=Date.now()+remaining*1000;clearInterval(timer);timer=setInterval(tick,200);render()};if(finished?.hornAtEnd)horn(proceed);else proceed()}
+$('competitionMode').onclick=()=>setMode('competition');$('dropoffMode').onclick=()=>setMode('dropoff');els.back.onclick=goHome;$('enableAudio').onclick=unlockAudio;els.start.onclick=()=>running?pause():start(index===0&&remaining===stages[0]?.sec);$('manualHorn').onclick=()=>horn();$('manualVoice').onclick=warningSequence;$('skip').onclick=()=>{clearInterval(timer);running=false;completeStage()};$('reset').onclick=()=>mode==='competition'?buildCompetition():buildDropoff();$('plusMinute').onclick=()=>{remaining+=60;if(running)endAt+=60000;render()};$('minusMinute').onclick=()=>{remaining=Math.max(0,remaining-60);if(running)endAt=Math.max(Date.now(),endAt-60000);render()};['rounds','halfMinutes','halftimeMinutes','changeMinutes','warningEnabled'].forEach(id=>$(id).onchange=()=>{if(mode==='competition'&&!running)buildCompetition()});['dropWarningMinutes','dropIntervalMinutes','dropHornCount'].forEach(id=>$(id).onchange=()=>{if(mode==='dropoff'&&!running)buildDropoff()});document.addEventListener('visibilitychange',()=>{if(!document.hidden&&running)tick()});if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 })();
 </script>
 </body>

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#083b66">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Touch Timer">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Gordonvale Touch Timer</title>
+<style>
+:root{--navy:#083b66;--blue:#0b63a7;--green:#167c4b;--yellow:#d89c00;--red:#a92d2d;--purple:#6f42c1;--panel:#fff;--bg:#edf4f8;--ink:#102535;--muted:#607380;--accent:var(--navy)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{min-height:100%}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);overscroll-behavior:none}button,input,select{font:inherit}.app{max-width:900px;margin:auto;padding:calc(12px + env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom))}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:16px;border-radius:18px}.eyebrow{font-size:.72rem;font-weight:900;letter-spacing:.16em;opacity:.85}.top h1{margin:3px 0 0;font-size:clamp(1.25rem,5vw,2rem)}.home{display:grid;gap:14px;margin-top:16px}.mode{border:0;border-radius:20px;padding:22px;text-align:left;color:#fff;min-height:145px;box-shadow:0 10px 28px rgba(23,56,77,.15)}.mode strong{display:block;font-size:1.65rem;margin-bottom:8px}.mode span{display:block;line-height:1.35}.mode.competition{background:linear-gradient(135deg,var(--green),#0e9a60)}.mode.dropoff{background:linear-gradient(135deg,var(--purple),#9b59d0)}.card{background:var(--panel);border-radius:18px;box-shadow:0 8px 25px rgba(23,56,77,.08);padding:16px}.timer-view{display:none}.timer-view.active{display:block}.hero{margin-top:14px;text-align:center;border-top:8px solid var(--accent)}.round{font-weight:900;letter-spacing:.11em;color:var(--accent);font-size:clamp(1rem,4vw,1.6rem)}.stage{font-size:clamp(1.3rem,5vw,2.25rem);font-weight:850;margin-top:8px}.clock{font-variant-numeric:tabular-nums;font-weight:950;font-size:clamp(4.8rem,22vw,10rem);line-height:.95;margin:16px 0;color:var(--accent)}.next{color:var(--muted);font-size:1rem;min-height:24px}.bar{height:12px;background:#dfe9ef;border-radius:99px;overflow:hidden;margin-top:18px}.fill{height:100%;width:0;background:var(--accent);transition:width .2s linear}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.btn{border:0;border-radius:14px;padding:15px 10px;font-weight:850;background:#dfeaf1;color:#17384d;min-height:52px}.btn.primary{background:var(--accent);color:#fff}.btn.danger{background:#f4dcdc;color:#7f1c1c}.btn.dark{background:#17384d;color:#fff}.btn.wide{grid-column:1/-1;font-size:1.12rem}.btn:active,.mode:active{transform:scale(.985)}.btn:disabled{opacity:.5}.settings{margin-top:12px}.settings h2{margin:0 0 12px;font-size:1.1rem}.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field{display:flex;flex-direction:column;gap:6px}.field label{font-weight:750;font-size:.88rem}.field select,.field input[type=number]{padding:12px;border:1px solid #c7d5de;border-radius:12px;background:#fff}.toggle{display:flex;justify-content:space-between;align-items:center;border:1px solid #d6e1e7;border-radius:12px;padding:12px}.toggle input{width:24px;height:24px}.status{margin:12px 2px 0;color:var(--muted);text-align:center;min-height:24px}.footer{font-size:.82rem;color:var(--muted);margin-top:10px;text-align:center}.hidden{display:none!important}.back{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.28);padding:10px 12px;border-radius:12px;font-weight:800}.audio-lock{margin-top:12px;background:#fff5d8;border:1px solid #f0cf65;border-radius:14px;padding:12px;text-align:center}.audio-lock button{margin-top:8px}.drop-sequence{margin-top:10px;font-size:.9rem;color:var(--muted);text-align:center}
+@media(min-width:720px){.home{grid-template-columns:1fr 1fr}.grid{grid-template-columns:repeat(4,1fr)}.btn.wide{grid-column:span 2}.settings-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:470px){.settings-grid{grid-template-columns:1fr}.clock{font-size:22vw}.top h1{font-size:1.15rem}}
+</style>
+</head>
+<body>
+<audio id="warningBellAudio" preload="auto" playsinline src="warning-three-bells.wav"></audio>
+<audio id="fourBellAudio" preload="auto" playsinline src="four-church-bells.wav"></audio>
+<audio id="announcementAudio" preload="auto" playsinline src="one-minute-warning.mp3"></audio>
+<main class="app">
+<header class="top"><div><div class="eyebrow">GORDONVALE TOUCH</div><h1 id="appTitle">Competition Controller</h1></div><button id="backBtn" class="back hidden">Home</button></header>
+<section id="home" class="home">
+<button id="competitionMode" class="mode competition"><strong>🏉 Competition Timer</strong><span>Automatic rounds, halves, half-time, warnings and changeovers.</span></button>
+<button id="dropoffMode" class="mode dropoff"><strong>⚡ Drop-Off Timer</strong><span>One-minute warning, then four church-bell chimes every two minutes, three times.</span></button>
+</section>
+<section id="timerView" class="timer-view">
+<div id="audioLock" class="audio-lock"><strong>Enable sound before starting</strong><br><span>iPhone requires one tap to unlock the church bells and voice.</span><br><button id="enableAudio" class="btn dark">Enable & Test Sound</button></div>
+<section class="card hero">
+<div id="roundLabel" class="round">READY</div>
+<div id="stageLabel" class="stage">Choose a timer</div>
+<div id="clock" class="clock">00:00</div>
+<div id="nextLabel" class="next"></div>
+<div class="bar"><div id="progress" class="fill"></div></div>
+</section>
+<section class="grid">
+<button id="startPause" class="btn primary wide">Start</button>
+<button id="manualHorn" class="btn">Four Bell Chimes</button>
+<button id="manualVoice" class="btn">Announcement</button>
+<button id="minusMinute" class="btn">−1 minute</button>
+<button id="plusMinute" class="btn">+1 minute</button>
+<button id="skip" class="btn">Next Stage</button>
+<button id="reset" class="btn danger">Reset</button>
+</section>
+<section id="competitionSettings" class="card settings">
+<h2>Competition settings</h2>
+<div class="settings-grid">
+<div class="field"><label for="rounds">Rounds</label><select id="rounds"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select></div>
+<div class="field"><label for="halfMinutes">Half length</label><select id="halfMinutes"><option>10</option><option>15</option><option selected>20</option><option>25</option><option>30</option></select></div>
+<div class="field"><label for="halftimeMinutes">Half-time Break</label><select id="halftimeMinutes"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
+<div class="field"><label for="changeMinutes">Changeover</label><select id="changeMinutes"><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option selected>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option></select></div>
+<div class="toggle"><span><strong>1-minute warning</strong><br><small>Before each half</small></span><input id="warningEnabled" type="checkbox" checked></div>
+<div class="toggle"><span><strong>Voice</strong><br><small>Warning message</small></span><input id="voiceEnabled" type="checkbox" checked></div>
+<div class="field"><label for="hornVolume">Church bell volume</label><input id="hornVolume" type="range" min="0.1" max="1" value="0.65" step="0.05"></div>
+<div class="field"><label>Voice announcement</label><div class="toggle"><span><strong>MP3 voice file</strong><br><small>one-minute-warning.mp3</small></span></div></div>
+</div>
+</section>
+<section id="dropoffSettings" class="card settings hidden">
+<h2>Drop-Off settings</h2>
+<div class="settings-grid">
+<div class="field"><label for="dropWarningMinutes">Warning length</label><select id="dropWarningMinutes"><option selected>1</option><option>2</option></select></div>
+<div class="field"><label for="dropIntervalMinutes">Bell interval</label><select id="dropIntervalMinutes"><option>1</option><option selected>2</option><option>3</option></select></div>
+<div class="field"><label for="dropHornCount">Number of bell signals</label><select id="dropHornCount"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+<div class="toggle"><span><strong>Warning voice</strong><br><small>Players take the field</small></span><input id="dropVoiceEnabled" type="checkbox" checked></div>
+</div>
+<div class="drop-sequence">Default: three warning chimes and announcement → four chimes → 2 minutes → four chimes → 2 minutes → four chimes → 2 minutes → final four chimes. No “drop-off complete” voice.</div>
+</section>
+<div id="status" class="status">Select a timer mode.</div>
+<div class="footer">Keep the iPhone screen awake and volume turned up. Connect to the PA using AUX/LINE IN or Bluetooth.</div>
+</section>
+</main>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);let mode=null,stages=[],index=0,remaining=0,running=false,timer=null,endAt=0,audioUnlocked=false;const warningBellAudio=$('warningBellAudio'),fourBellAudio=$('fourBellAudio'),announcementAudio=$('announcementAudio');
+const els={home:$('home'),view:$('timerView'),title:$('appTitle'),back:$('backBtn'),round:$('roundLabel'),stage:$('stageLabel'),clock:$('clock'),next:$('nextLabel'),progress:$('progress'),status:$('status'),start:$('startPause'),compSettings:$('competitionSettings'),dropSettings:$('dropoffSettings'),audioLock:$('audioLock')};
+function fmt(s){s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function playAudio(audio,statusText,done){
+  try{
+    warningBellAudio.pause(); fourBellAudio.pause(); announcementAudio.pause();
+    audio.currentTime=0;
+    audio.volume=+$('hornVolume').value;
+    const playPromise=audio.play();
+    if(playPromise&&typeof playPromise.then==='function'){
+      playPromise.then(()=>{
+        els.status.textContent=statusText;
+        const finish=()=>{audio.removeEventListener('ended',finish);done&&done()};
+        audio.addEventListener('ended',finish,{once:true});
+      }).catch(()=>{
+        els.status.textContent='Bell sound was blocked. Tap Enable & Test Sound again.';
+        done&&done();
+      });
+    }
+  }catch(e){
+    els.status.textContent='Bell sound could not start. Tap Enable & Test Sound.';
+    done&&done();
+  }
+}
+function horn(done){playAudio(fourBellAudio,'Four church-bell chimes playing.',done)}
+function playAnnouncement(done){
+  const enabled=mode==='dropoff' ? $('dropVoiceEnabled').checked : $('voiceEnabled').checked;
+  if(!enabled){done&&done();return}
+  announcementAudio.pause();
+  announcementAudio.currentTime=0;
+  announcementAudio.volume=1;
+  const playPromise=announcementAudio.play();
+  if(playPromise&&typeof playPromise.then==='function'){
+    playPromise.then(()=>{
+      els.status.textContent='Voice announcement playing.';
+      const finish=()=>{announcementAudio.removeEventListener('ended',finish);done&&done()};
+      announcementAudio.addEventListener('ended',finish,{once:true});
+    }).catch(()=>{
+      els.status.textContent='Announcement was blocked. Tap Enable & Test Sound again.';
+      done&&done();
+    });
+  }
+}
+function warningSequence(){
+  const enabled=mode==='dropoff' ? $('dropVoiceEnabled').checked : $('voiceEnabled').checked;
+  playAudio(warningBellAudio,'Three warning chimes playing.',()=>{
+    if(enabled)playAnnouncement();
+  });
+}
+async function unlockAudio(){
+  try{
+    fourBellAudio.volume=+$('hornVolume').value;
+    fourBellAudio.currentTime=0;
+    await fourBellAudio.play();
+    audioUnlocked=true;
+    els.audioLock.classList.add('hidden');
+    els.status.textContent='Four church-bell chimes test playing.';
+    fourBellAudio.onended=()=>{fourBellAudio.onended=null;speak('Sound enabled.')};
+  }catch(e){
+    audioUnlocked=false;
+    els.status.textContent='Safari blocked the bells. Tap Enable & Test Sound again.';
+  }
+}
+function buildCompetition(){stages=[];const rounds=+$('rounds').value,half=+$('halfMinutes').value*60,halfTime=+$('halftimeMinutes').value*60,change=+$('changeMinutes').value*60;for(let r=1;r<=rounds;r++){if($('warningEnabled').checked)stages.push({label:`ROUND ${r} OF ${rounds}`,name:'One-minute warning',sec:60,type:'warning',hornAtEnd:true,warningAtStart:true,next:`Round ${r} first half`});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'First half',sec:half,type:'play',hornAtEnd:true,next:'Half-time'});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'Half-time',sec:halfTime,type:'break',hornAtEnd:true,next:'Second half'});if($('warningEnabled').checked)stages.push({label:`ROUND ${r} OF ${rounds}`,name:'One-minute warning',sec:60,type:'warning',hornAtEnd:true,warningAtStart:true,next:`Round ${r} second half`});stages.push({label:`ROUND ${r} OF ${rounds}`,name:'Second half',sec:half,type:'play',hornAtEnd:true,next:r<rounds?'Changeover':'Competition complete'});if(r<rounds)stages.push({label:`NEXT: ROUND ${r+1}`,name:'Changeover',sec:change,type:'break',hornAtEnd:false,next:`Round ${r+1}`});}resetState()}
+function buildDropoff(){stages=[];const w=+$('dropWarningMinutes').value*60,interval=+$('dropIntervalMinutes').value*60,count=+$('dropHornCount').value;stages.push({label:'DROP-OFF TIMER',name:'One-minute warning',sec:w,type:'warning',hornAtEnd:true,warningAtStart:true,next:'Drop-off starts'});for(let n=1;n<=count;n++)stages.push({label:'DROP-OFF TIMER',name:`Drop-off period ${n} of ${count}`,sec:interval,type:'dropoff',hornAtEnd:true,next:n<count?`Bell signal ${n+1} of ${count}`:'Drop-off complete'});resetState()}
+function resetState(){clearInterval(timer);running=false;index=0;remaining=stages[0]?.sec||0;render()}
+function setMode(m){mode=m;els.home.classList.add('hidden');els.view.classList.add('active');els.back.classList.remove('hidden');els.compSettings.classList.toggle('hidden',m!=='competition');els.dropSettings.classList.toggle('hidden',m!=='dropoff');$('manualVoice').classList.toggle('hidden',false);els.title.textContent=m==='competition'?'Competition Controller':'Drop-Off Timer';document.documentElement.style.setProperty('--accent',m==='competition'?'var(--green)':'var(--purple)');m==='competition'?buildCompetition():buildDropoff();els.status.textContent='Tap Enable & Test Sound before starting.'}
+function goHome(){pause();mode=null;els.view.classList.remove('active');els.home.classList.remove('hidden');els.back.classList.add('hidden');els.title.textContent='Competition Controller';els.status.textContent='Select a timer mode.'}
+function render(){const s=stages[index];document.body.dataset.state=s?.type||'finished';els.round.textContent=s?s.label:(mode==='dropoff'?'DROP-OFF COMPLETE':'COMPETITION COMPLETE');els.stage.textContent=s?s.name:'Complete';els.clock.textContent=fmt(remaining);els.next.textContent=s?`Next: ${s.next}`:'No voice announcement';els.progress.style.width=s&&s.sec?`${Math.min(100,Math.max(0,(1-remaining/s.sec)*100))}%`:'100%';els.start.textContent=running?'Pause':index>=stages.length?'Finished':(index===0&&remaining===stages[0]?.sec?'Start':'Resume');els.start.disabled=index>=stages.length}
+function start(initial=false){if(!audioUnlocked){els.status.textContent='Tap Enable & Test Sound first so iPhone permits audio.';return}const s=stages[index];if(!s)return;if(initial&&s.warningAtStart)warningSequence();running=true;endAt=Date.now()+remaining*1000;clearInterval(timer);timer=setInterval(tick,200);render()}
+function pause(){if(running)remaining=Math.max(0,(endAt-Date.now())/1000);running=false;clearInterval(timer);render()}
+function tick(){remaining=Math.max(0,(endAt-Date.now())/1000);if(remaining<=0){clearInterval(timer);completeStage()}render()}
+function completeStage(){const finished=stages[index];const proceed=()=>{index++;if(index>=stages.length){running=false;remaining=0;render();els.status.textContent=mode==='dropoff'?'Drop-off complete. No voice announcement.':'Competition complete.';return}remaining=stages[index].sec;const nextStage=stages[index];if(nextStage.warningAtStart)warningSequence();running=true;endAt=Date.now()+remaining*1000;clearInterval(timer);timer=setInterval(tick,200);render()};if(finished?.hornAtEnd)horn(proceed);else proceed()}
+$('competitionMode').onclick=()=>setMode('competition');$('dropoffMode').onclick=()=>setMode('dropoff');els.back.onclick=goHome;$('enableAudio').onclick=unlockAudio;els.start.onclick=()=>running?pause():start(index===0&&remaining===stages[0]?.sec);$('manualHorn').onclick=()=>horn();$('manualVoice').onclick=()=>playAnnouncement();$('skip').onclick=()=>{clearInterval(timer);running=false;completeStage()};$('reset').onclick=()=>mode==='competition'?buildCompetition():buildDropoff();$('plusMinute').onclick=()=>{remaining+=60;if(running)endAt+=60000;render()};$('minusMinute').onclick=()=>{remaining=Math.max(0,remaining-60);if(running)endAt=Math.max(Date.now(),endAt-60000);render()};['rounds','halfMinutes','halftimeMinutes','changeMinutes','warningEnabled'].forEach(id=>$(id).onchange=()=>{if(mode==='competition'&&!running)buildCompetition()});['dropWarningMinutes','dropIntervalMinutes','dropHornCount'].forEach(id=>$(id).onchange=()=>{if(mode==='dropoff'&&!running)buildDropoff()});document.addEventListener('visibilitychange',()=>{if(!document.hidden&&running)tick()});if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>

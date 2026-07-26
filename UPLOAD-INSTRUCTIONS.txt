@@ -1,0 +1,18 @@
+GORDONVALE TOUCH TIMER VERSION 2.0
+
+UPLOAD OR REPLACE THESE FILES IN YOUR GITHUB REPOSITORY:
+- index.html
+- style.css
+- script.js
+- sw.js
+- manifest.webmanifest
+- gordonvale-logo.jpg
+- icon-192.png
+- icon-512.png
+
+KEEP THESE EXISTING SOUND FILES IN THE REPOSITORY:
+- warning-three-bells.wav
+- four-church-bells.wav
+- one-minute-warning.mp3
+
+After uploading, wait about two minutes, then refresh the app. If an old version remains on iPhone, close Safari completely and reopen the app.

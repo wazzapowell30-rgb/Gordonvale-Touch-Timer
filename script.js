@@ -1,94 +1,9 @@
-<!doctype html>
-<html lang="en-AU">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#061a33">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Touch Timer">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="stylesheet" href="style.css">
-<title>Gordonvale Touch Timer</title>
-</head>
-<body>
-<audio id="warningBellAudio" preload="auto" playsinline src="warning-three-bells.wav"></audio>
-<audio id="fourBellAudio" preload="auto" playsinline src="four-church-bells.wav"></audio>
-<audio id="announcementAudio" preload="auto" playsinline src="one-minute-warning.mp3"></audio>
-<main class="app">
-<header class="top">
-<div class="brand-wrap"><img class="club-logo" src="gordonvale-logo.jpg" alt="Gordonvale Outlaws logo"><div><div class="eyebrow">GORDONVALE TOUCH</div><h1 id="appTitle">Touch Timer</h1><div class="club-line">OUTLAWS • TEAMWORK • RESPECT • FAMILY • FUN</div></div></div>
-<button id="backBtn" class="back hidden">Home</button>
-</header>
-<section id="home" class="home">
-<button id="competitionMode" class="mode competition"><strong>⏱️ Competition Timer</strong><span>Automatic rounds, halves, Half-Time Breaks, warnings and changeovers between games.</span></button>
-<button id="dropoffMode" class="mode dropoff"><strong>🔔 Drop-Off Timer</strong><span>One-minute warning, then four church-bell chimes every two minutes, three times.</span></button>
-</section>
-<section id="timerView" class="timer-view">
-<div id="audioLock" class="audio-lock"><strong>Enable sound before starting</strong><br><span>iPhone requires one tap to unlock the church bells and voice.</span><br><button id="enableAudio" class="btn dark">Enable & Test Sound</button></div>
-<section class="card hero">
-<div id="roundLabel" class="round">READY</div>
-<div id="stageLabel" class="stage">Choose a timer</div>
-<div id="clock" class="clock">00:00</div>
-<div id="nextLabel" class="next"></div>
-<div class="next-action"><small>NEXT AUTOMATIC ACTION</small><strong id="automaticAction">Waiting to start</strong></div>
-<div class="bar"><div id="progress" class="fill"></div></div>
-</section>
-<section class="main-control">
-<button id="startPause" class="btn primary">Start</button>
-</section>
-<section class="card manual-panel">
-<h2 class="manual-title">MANUAL OVERRIDES</h2>
-<p class="manual-help">Use these controls at any time to manually adjust or operate the timer.</p>
-<div class="manual-grid">
-<button id="manualHorn" class="btn">🔔 Four Bell Chimes</button>
-<button id="manualVoice" class="btn">📢 Announcement</button>
-<button id="minusMinute" class="btn">−1 Minute</button>
-<button id="plusMinute" class="btn">+1 Minute</button>
-<button id="skip" class="btn">Skip to Next Stage</button>
-<button id="reset" class="btn danger">Reset Timer</button>
-</div>
-</section>
-<section id="competitionSettings" class="card settings">
-<h2>Competition settings</h2>
-<div class="settings-grid">
-<div class="field"><label for="rounds">Rounds</label><select id="rounds"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select></div>
-<div class="field"><label for="halfMinutes">Half length</label><select id="halfMinutes"><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option selected>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option></select></div>
-<div class="field"><label for="halftimeMinutes">Half-Time Break</label><select id="halftimeMinutes"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
-<div class="field"><label for="changeMinutes">Changeover between Games</label><select id="changeMinutes"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option selected>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option></select></div>
-<div class="toggle"><span><strong>1-minute warning</strong><br><small>Before each half</small></span><input id="warningEnabled" type="checkbox" checked></div>
-<div class="toggle"><span><strong>Voice</strong><br><small>Warning message</small></span><input id="voiceEnabled" type="checkbox" checked></div>
-<div class="field"><label for="hornVolume">Church bell volume</label><input id="hornVolume" type="range" min="0.1" max="1" value="0.65" step="0.05"></div>
-<div class="field"><label>Voice announcement</label><div class="toggle"><span><strong>MP3 voice file</strong><br><small>one-minute-warning.mp3</small></span></div></div>
-</div>
-<button id="saveDefaults" class="btn dark save-defaults">Save as Default</button>
-</section>
-<section id="dropoffSettings" class="card settings hidden">
-<h2>Drop-Off settings</h2>
-<div class="settings-grid">
-<div class="field"><label for="dropWarningMinutes">Warning length</label><select id="dropWarningMinutes"><option selected>1</option><option>2</option></select></div>
-<div class="field"><label for="dropIntervalMinutes">Bell interval</label><select id="dropIntervalMinutes"><option>1</option><option selected>2</option><option>3</option></select></div>
-<div class="field"><label for="dropHornCount">Number of bell signals</label><select id="dropHornCount"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
-<div class="toggle"><span><strong>Warning voice</strong><br><small>Players take the field</small></span><input id="dropVoiceEnabled" type="checkbox" checked></div>
-</div>
-<div class="drop-sequence">Default: three warning chimes and announcement → four chimes → 2 minutes → four chimes → 2 minutes → four chimes → 2 minutes → final four chimes. No “drop-off complete” voice.</div>
-<button id="saveDropoffDefaults" class="btn dark save-defaults">Save Drop-Off Settings as Default</button>
-</section>
-<section id="sequenceCard" class="card sequence-card hidden">
-<h2 id="sequenceTitle">Competition sequence</h2>
-<div id="sequenceList" class="sequence-list"></div>
-</section>
-<div id="status" class="status">Select a timer mode.</div>
-<div class="footer">Keep the iPhone screen awake and volume turned up. Connect to the PA using AUX/LINE IN or Bluetooth.</div>
-</section>
-</main>
-<script>
+
 (()=>{
 const $=id=>document.getElementById(id);
 let mode=null,stages=[],index=0,remaining=0,running=false,timer=null,endAt=0,audioUnlocked=false;
 const warningBellAudio=$('warningBellAudio'),fourBellAudio=$('fourBellAudio'),announcementAudio=$('announcementAudio');
-const els={home:$('home'),view:$('timerView'),title:$('appTitle'),back:$('backBtn'),round:$('roundLabel'),stage:$('stageLabel'),clock:$('clock'),next:$('nextLabel'),progress:$('progress'),status:$('status'),start:$('startPause'),automaticAction:$('automaticAction'),compSettings:$('competitionSettings'),dropSettings:$('dropoffSettings'),audioLock:$('audioLock')};
+const els={home:$('home'),view:$('timerView'),title:$('appTitle'),back:$('backBtn'),round:$('roundLabel'),stage:$('stageLabel'),clock:$('clock'),next:$('nextLabel'),progress:$('progress'),status:$('status'),start:$('startPause'),automaticAction:$('automaticAction'),compSettings:$('competitionSettings'),dropSettings:$('dropoffSettings'),audioLock:$('audioLock'),sequenceCard:$('sequenceCard'),sequenceTitle:$('sequenceTitle'),sequenceList:$('sequenceList')};
 const competitionDefaultIds=['rounds','halfMinutes','halftimeMinutes','changeMinutes','warningEnabled','voiceEnabled','hornVolume'];
 const dropoffDefaultIds=['dropWarningMinutes','dropIntervalMinutes','dropHornCount','dropVoiceEnabled','hornVolume'];
 
@@ -272,25 +187,36 @@ function loadDefaults(){
   }
 }
 
+
+function renderSequence(){
+  if(!mode){els.sequenceCard.classList.add('hidden');return}
+  els.sequenceCard.classList.remove('hidden');
+  els.sequenceTitle.textContent=mode==='competition'?'Competition sequence':'Drop-Off sequence';
+  const iconFor=s=>s.type==='warning'?'🔔':s.type==='play'?'▶️':s.type==='dropoff'?'⏱️':'↔️';
+  els.sequenceList.innerHTML=stages.map((s,i)=>`<div class="sequence-row"><span>${iconFor(s)}</span><strong>${i+1}. ${s.name}</strong><span>${fmt(s.sec)}</span></div>`).join('')+
+    (mode==='competition'?'<div class="sequence-note">The sequence repeats automatically for each selected round.</div>':'<div class="sequence-note">No completion voice announcement is played.</div>');
+}
+
 function resetState(){
   clearInterval(timer);
   running=false;
   index=0;
   stages.forEach(stage=>stage.warningPlayed=false);
   remaining=stages[0]?.sec||0;
+  renderSequence();
   render();
 }
 
 function setMode(m){
   mode=m;els.home.classList.add('hidden');els.view.classList.add('active');els.back.classList.remove('hidden');
   els.compSettings.classList.toggle('hidden',m!=='competition');els.dropSettings.classList.toggle('hidden',m!=='dropoff');
-  els.title.textContent=m==='competition'?'Competition Controller':'Drop-Off Timer';
-  document.documentElement.style.setProperty('--accent',m==='competition'?'var(--green)':'var(--purple)');
+  els.title.textContent=m==='competition'?'Competition Timer':'Drop-Off Timer';
+  document.documentElement.style.setProperty('--accent','var(--gold)');
   m==='competition'?buildCompetition():buildDropoff();
   els.status.textContent='Tap Enable & Test Sound before starting.';
 }
 
-function goHome(){pause();mode=null;els.view.classList.remove('active');els.home.classList.remove('hidden');els.back.classList.add('hidden');els.title.textContent='Competition Controller';els.status.textContent='Select a timer mode.'}
+function goHome(){pause();mode=null;els.view.classList.remove('active');els.home.classList.remove('hidden');els.back.classList.add('hidden');els.title.textContent='Touch Timer';els.status.textContent='Select a timer mode.';els.sequenceCard.classList.add('hidden')}
 
 function automaticActionText(s){
   if(!s)return mode==='dropoff'?'Drop-Off complete':'Competition complete';
@@ -429,8 +355,3 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&running)t
 loadDefaults();
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 })();
-</script>
-
-<script src="script.js"></script>
-</body>
-</html>
